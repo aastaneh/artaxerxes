@@ -1,0 +1,46 @@
+Artaxerxes SOAP Daemon
+Amin Astaneh (amin@aminastaneh.net)
+February 2011
+
+The original Xerxes project (http://xerxes.qwik.net/) filled the needs of web-based email administration using open-source tools, however there were several shortcomings in its design:
+
+1) No separation between business logic and presentation
+2) Used a PHP-based IMAP library that had past issues with interfacing with Cyrus-IMAP
+3) Had insufficient logic to determine that mailbox and database entries are in-sync
+4) Used older PHP conventions and packages 
+
+Therefore, for a long time I have considered a rewrite. My greatest reservation about that was that I have limited time to work on it since I left Qwik.net several years ago. Also, Google Apps. They already provide email services for a domain name for free. However, for those admins that are unable to use Google or prefer to privately host email, I have come up with a solution:
+
+Artaxerxes manipulates Cyrus mailboxes and maintains a MySQL database just as the original Xerxes did. The only difference is that being a SOAP daemon, Artaxerxes simply provides an API. There is no presentation or UI whatsoever, allowing others to write frontends in any language/platform they see fit (CLI, Web, Desktop). 
+ 
+Artaxerxes Details:
+
+* Written in Perl. This was done in order to leverage the native Cyradm Perl libraries to make manipulating mailboxes rock-solid.
+
+* The database schema has been redesigned for simplicity. This allows features to be added to Artaxerxes with minimal pain.
+
+What's Here Now:
+
+* A basic daemon that allows creation/deletion of mail domains and users.
+
+* An example set of client scripts in Perl to demonstrate current functionality
+
+What's still needed:
+
+* Need to work on supporting storing passwords as one-way hashes rather than plaintext in the original Xerxes. That was always an issue due to being dependant on SASL-Auxprop, and this problem can be easily solved now that the project is young.
+
+* Need to implement functions to support mail forwards
+
+* Need to implement functions to manipulate user/domain attributes
+
+* Need to formalize a set of return codes.
+
+* SSL support. 
+
+* ACL support to grant adminuser access to domains
+
+* Finally, formalize and document the API for developers to use
+
+I hope this grows to an easy-to-use and effective email virtual-domain solution. Enjoy!
+
+-Amin Astaneh
