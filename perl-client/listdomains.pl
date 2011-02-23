@@ -10,12 +10,6 @@ $result = $soap->listdomains();
 
 @array = @{$result->paramsout};
 
-#%hash = %{$result->paramsout};
-
-#while ( my ($key, $value) = each(%hash) ) {
-#        print "$key => $value\n";
-#}
-
 foreach my $domain (@array) {
 	print "$domain\n";
 }
