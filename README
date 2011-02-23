@@ -11,7 +11,7 @@ The original Xerxes project (http://xerxes.qwik.net/) filled the needs of web-ba
 
 Therefore, for a long time I have considered a rewrite. My greatest reservation about that was that I have limited time to work on it since I left Qwik.net several years ago. Also, Google Apps. They already provide email services for a domain name for free. However, for those admins that are unable to use Google or prefer to privately host email, I have come up with a solution:
 
-Artaxerxes manipulates Cyrus mailboxes and maintains a MySQL database just as the original Xerxes did. The only difference is that being a SOAP daemon, Artaxerxes simply provides an API. There is no presentation or UI whatsoever, allowing others to write frontends in any language/platform they see fit (CLI, Web, Desktop). 
+Artaxerxes manipulates Cyrus mailboxes and maintains a MySQL database just as the original Xerxes did. The only difference is that being a SOAP daemon, Artaxerxes simply provides an API. There is no presentation or UI whatsoever, allowing others to write frontends in any language/platform/purpose they see fit. 
  
 Artaxerxes Details:
 
