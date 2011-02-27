@@ -6,13 +6,13 @@ my $soap = SOAP::Lite
   -> proxy('http://localhost:8080');
 
 if (($#ARGV + 1) != 1) {
-        print "Usage: listaccts pattern\n";
+        print "Usage: descacct address\n";
         exit 1;
 }
 
-$domain = $ARGV[0];
+my $acct = $ARGV[0];
 
-$result = $soap->getdomainattributes($domain);
+$result = $soap->getacctattributes($acct);
 
 if ($result->result == 0) {
 print $result->paramsout . "\n";

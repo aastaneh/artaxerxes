@@ -2,13 +2,14 @@
 use SOAP::Transport::HTTP;
 use strict;
 use warnings;
+use Switch;
 use Cyrus::IMAP::Admin;
 use DBI;
 use DBD::mysql;
 #################################################
-# server.pl - proof of concept SOAP daemon
+# server.pl - Artaxerxes SOAP daemon
 #
-# Amin Astaneh, Xerxes Project Lead 
+# Amin Astaneh
 # amin@aminastaneh.net
 #################################################
 
@@ -17,6 +18,7 @@ BEGIN { require "config.pl"; }
 # Connect to MySQL 
 my $dsn = "dbi:mysql:$dbname:$dbhost:3306";
 my $dbhandle = DBI->connect($dsn, $dbuser, $dbpass) or die "Unable to connect: $DBI::errstr\n";
+$dbhandle->{mysql_auto_reconnect} = 1;
 
 # Authenticate to the IMAP server
 my $imap = Cyrus::IMAP::Admin->new($mailhost) || die "Unable to connect to $mailhost";
@@ -31,7 +33,8 @@ $imap->authenticate(
 ) || die "Authentication Failure";
 
 my $daemon = SOAP::Transport::HTTP::Daemon
- -> new (LocalPort => 8080)
+ -> new (LocalPort => 8080,
+         Reuse     => 1)
  -> dispatch_to('Xerxes')        
 ;
 
@@ -61,7 +64,6 @@ sub listaccts {
                 push (@userlist, $result->{addr});
         }
 	
-	#return (1,{'answer' => join(',', @userlist)});
 	return (1, \@userlist);
 }
 
@@ -73,7 +75,6 @@ sub listdomains {
 	while (my $result = $sth->fetchrow_hashref()) {
 		push (@domainlist, $result->{name});
 	}
-	#return (1, {'answer' => join(',', @domainlist)});
 	return (1, \@domainlist);
 }
 
@@ -82,6 +83,9 @@ sub getdomainattributes {
 	my $query = "SELECT * FROM domain WHERE name = '$domain'";
 	my $sth = $dbhandle->prepare($query);
         $sth->execute();
+	if ($sth->rows == 0){
+                return (0, "ERROR: Domain $domain not present.");
+        }
 	my $result = $sth->fetchrow_hashref();
 	my %attr = ( 'id'       => $result->{id},
 		     'name'     => $result->{name},
@@ -94,7 +98,11 @@ sub getdomainattributes {
 }
 
 sub createdomain {
+	use Regexp::Common qw /net/;
 	my ($class, $name, $quota, $maxaccts) = @_;
+	if ($name !~ /(?! )$RE{net}{domain}/){
+		return (0, "Error: Domain must be a valid hostname.");
+	}
 	my $query = "INSERT INTO domain (name, quota, max_acct) VALUES ('$name', '$quota', '$maxaccts')";
 	my $sth = $dbhandle->prepare($query);
         $sth->execute();
@@ -110,7 +118,7 @@ sub deletedomain {
 	my $sth = $dbhandle->prepare($userquery);
         $sth->execute();
         while (my $result = $sth->fetchrow_hashref()) {
-                deleteacct($result->{addr});
+                deleteacct(undef, $result->{addr});
         }
 	my $query = "DELETE FROM domain WHERE name = '$domain'";
         $sth = $dbhandle->prepare($query);
@@ -118,6 +126,7 @@ sub deletedomain {
 
 	# FIXME: Verify the domain is deleted.
 	# FIXME: Verify all accounts are deleted
+	return (1, "OK");
 }
 
 sub createacct {
@@ -162,6 +171,8 @@ sub createacct {
 	$imap->create("user/$address");
 
 	# FIXME: Verify the account was created
+	# FIXME: Add one-way hashing function for password storage. (SHA2)
+	return (1, "OK");
 }
 
 sub deleteacct {
@@ -174,16 +185,108 @@ sub deleteacct {
 	$imap->delete("$fullname");
 
 	# FIXME: Verify the account was deleted
+	return (1, "OK");
 }
 
+sub setdomainattributes {
+	my ($class, $domain, $attr, $val) = @_;
 
+	# Verify domain exists
+	my $domainquery = "SELECT name FROM domain WHERE name ='$domain'";
+	my $sth = $dbhandle->prepare($domainquery);
+        $sth->execute();
+	if ($sth->rows == 0){
+                return (0, "ERROR: Domain $domain not present.");
+        }
+	
+	# Validate inputs
+	switch ($attr) {
+		case "quota"{
+			if (($val =~ /\D/) || ($val <= 0 )) {
+				return (0, "ERROR: Domain attribute quota can only be a positive integer.");
+			}
+		}
+		case "max_acct"{
+			if (($val =~ /\D/) || ($val <= 0 )) {
+                                return (0, "ERROR: Domain attribute max_acct can only be a positive integer.");
+                        }
+		}
+		case "active" {
+			if (($val != 0) && ($val != 1)){
+				return (0, "ERROR: Domain attribute active can only be 1 (true) or 0 (false).");
+			} 
+		}
+		case "name" {
+			return (0, "ERROR: Domain attribute name cannot be changed.");
+		}
+		else {
+			return (0, "ERROR: No such domain attribute.");
+		}
+	}	
+
+	my $query = "UPDATE domain SET $attr = '$val' WHERE name = '$domain'";
+        $sth = $dbhandle->prepare($query);
+        $sth->execute();
+	return (1, "OK");
+}
+
+sub getacctattributes {
+        my ($class, $addr) = @_;
+        my $query = "SELECT * FROM acct WHERE addr = '$addr'";
+        my $sth = $dbhandle->prepare($query);
+        $sth->execute();
+        if ($sth->rows == 0){
+                return (0, "ERROR: Account $addr not present.");
+        }
+        my $result = $sth->fetchrow_hashref();
+        my %attr = ( 'id'       => $result->{id},
+                     'addr'     => $result->{addr},
+                     'quota'    => $result->{quota},
+                     'active'   => $result->{active}
+        );
+
+        return (1,\%attr);
+}
+
+sub setacctattributes {
+        my ($class, $addr, $attr, $val) = @_;
+
+        # Verify domain exists
+        my $acctquery = "SELECT addr FROM acct WHERE addr ='$addr'";
+        my $sth = $dbhandle->prepare($acctquery);
+        $sth->execute();
+        if ($sth->rows == 0){
+                return (0, "ERROR: Account $addr not present.");
+        }
+
+        # Validate inputs
+        switch ($attr) {
+                case "quota"{
+                        if (($val !~ /^\d+$/) || ($val <= 0 )) {
+                                return (0, "ERROR: Account attribute quota can only be a positive integer.");
+                        }
+                }
+                case "password"{
+			# somehow validate this
+                }
+                case "active" {
+                        if (($val != 0) && ($val != 1)){
+                                return (0, "ERROR: Account attribute active can only be 1 (true) or 0 (false).");
+                        }
+                }
+                else {
+                        return (0, "ERROR: Account attribute cannot be changed or no such account attribute");
+                }
+        }
+
+        my $query = "UPDATE acct SET $attr = '$val' WHERE addr = '$addr'";
+        $sth = $dbhandle->prepare($query);
+        $sth->execute();
+        return (1, "OK");
+}
 
 # Functions yet to be implemented
 
-# setdomainattributes(hash?)
-
-# getuserattributes
-# setuserattributes
 # createforward
 # listforwards
 # deleteforward
@@ -191,19 +294,3 @@ sub deleteacct {
 ##############################
 # End Functions
 ##############################
-
-##############################
-# Begin Main Process
-##############################
-
-
-#	my @mailboxes = $imap->list("*test.com");	
-#	foreach my $mailbox (@mailboxes) {
-#	        my $currentuser = @$mailbox[0];
-#		print $currentuser . "\n";
-		# We ensure only email addresses, not mailboxes (has an '@' and only one '/' in the listing
-#       	if ( $currentuser !~ /.*\/.*\/.*/ && $currentuser =~ /.*@.*/){
-#                	$currentuser =~ s/^user\///g;
-#			push(@userlist,$currentuser);
-#		}
-#	}

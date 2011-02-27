@@ -12,4 +12,8 @@ if (($#ARGV + 1) != 1) {
 
 my $email =$ARGV[0];
 $result = $soap->deleteacct($email);
-
+if ($result->result == 0) {
+print $result->paramsout . "\n";
+exit 1;
+}
+exit 0;

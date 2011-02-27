@@ -13,8 +13,15 @@ my $soap = SOAP::Lite
 my $arg = $ARGV[0];
 $result = $soap->listaccts($arg);
 
+if ($result->result == 0) {
+print $result->paramsout . "\n";
+exit 1;
+}
+
 @array = @{$result->paramsout};
 
 foreach my $addr (@array) {
 	print "$addr\n";
 }
+
+exit 0;

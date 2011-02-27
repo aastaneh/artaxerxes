@@ -13,3 +13,8 @@ if (($#ARGV + 1) != 1) {
 my $name =$ARGV[0];
 $result = $soap->deletedomain($name);
 
+if ($result->result == 0) {
+print $result->paramsout . "\n";
+exit 1;
+}
+exit 0;

@@ -22,7 +22,5 @@ if ($result->result == 0) {
 print $result->paramsout . "\n";
 exit 1;
 }
-
-print "OK\n";
 exit 0;
 
