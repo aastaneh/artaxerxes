@@ -1,9 +1,14 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
 use SOAP::Lite;
+use Config::Simple;
+
+my $cfg = new Config::Simple($ENV{"HOME"} . '/.azclientrc');
 
 my $soap = SOAP::Lite
-  -> uri('http://localhost/Xerxes')
-  -> proxy('http://localhost:8080');
+  -> uri($cfg->param('URI'))
+  -> proxy($cfg->param('PROXY'));
 
 if (($#ARGV + 1) != 1) {
 	print "Usage: deleteacct email\n";
@@ -11,7 +16,7 @@ if (($#ARGV + 1) != 1) {
 }
 
 my $email =$ARGV[0];
-$result = $soap->deleteacct($email);
+my $result = $soap->deleteacct($email);
 if ($result->result == 0) {
 print $result->paramsout . "\n";
 exit 1;

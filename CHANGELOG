@@ -1,0 +1,8 @@
+2011-02-27:	Initial Commit
+
+2011-07-16:	Moved to MD5 rather than plain pass storage. (pam_mysql doesn't support bcrypt).
+		Decided on Deploying as a CGI script rather than a daemon to get SSL and auth for free
+		Cleaned up perl client code, using strict pragma like a boss
+		Using Config::Simple rather than some janky include file
+		Wrote outline for install docs, updated README
+		

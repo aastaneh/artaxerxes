@@ -1,0 +1,14 @@
+
+To configure:
+
+Create a file called ~/.azclientrc with the following:
+
+URI https://server.domain.tld/artaxerxes
+PROXY https://user:password@server.domain.tld/cgi-bin/artaxerxes.cgi
+
+where:
+
+server.domain.tld = the remote server where Artaxerxes is available
+user = user for HTTP authentication to access the service
+password = corresponding password
+

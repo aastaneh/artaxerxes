@@ -1,9 +1,15 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
 use SOAP::Lite;
+use Config::Simple;
+use Digest::MD5 qw(md5 md5_hex md5_base64);
+
+my $cfg = new Config::Simple($ENV{"HOME"} . '/.azclientrc');
 
 my $soap = SOAP::Lite
-  -> uri('http://localhost/Xerxes')
-  -> proxy('http://localhost:8080');
+  -> uri($cfg->param('URI'))
+  -> proxy($cfg->param('PROXY'));
 
 if (($#ARGV + 1) != 3) {
 	print "Usage: changeacct address attribute value\n";
@@ -17,7 +23,7 @@ my $value = $ARGV[2];
 
 my @params = ($address, $attribute, $value);
 
-$result = $soap->setacctattributes(@params);
+my $result = $soap->setacctattributes(@params);
 
 if ($result->result == 0) {
 print $result->paramsout . "\n";

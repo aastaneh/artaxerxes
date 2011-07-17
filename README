@@ -1,6 +1,6 @@
 Artaxerxes SOAP Daemon
 Amin Astaneh (amin@aminastaneh.net)
-February 2011
+July 2011
 
 The original Xerxes project (http://xerxes.qwik.net/) filled the needs of web-based email administration using open-source tools, however there were several shortcomings in its design:
 
@@ -21,21 +21,21 @@ Artaxerxes Details:
 
 What's Here Now:
 
-* A basic daemon that allows creation/deletion of mail domains and users.
+* A basic CGI script that allows creation/deletion of mail domains and users. 
 
-* An example set of client scripts in Perl to demonstrate current functionality
+* Stores password hashes in MD5. Yes, the cool kids say bcrypt. PAM-MySQL doesn't support bcrypt. It's better than plain, OK?
+
+* Uses Apache for SSL and authentication to the SOAP service. 
+
+* An example set of client scripts in Perl to demonstrate current functionality.
 
 What's still needed:
-
-* Need to work on supporting storing passwords as one-way hashes rather than plaintext in the original Xerxes. That was always an issue due to being dependant on SASL-Auxprop, and this problem can be easily solved now that the project is young.
 
 * Need to implement functions to support mail forwards
 
 * Need to implement functions to manipulate user/domain attributes
 
 * Need to formalize a set of return codes.
-
-* SSL support. 
 
 * ACL support to grant adminuser access to domains
 

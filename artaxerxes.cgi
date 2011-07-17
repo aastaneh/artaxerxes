@@ -6,14 +6,23 @@ use Switch;
 use Cyrus::IMAP::Admin;
 use DBI;
 use DBD::mysql;
+use Config::Simple;
 #################################################
-# server.pl - Artaxerxes SOAP daemon
+# artaxerxes.cgi - Artaxerxes SOAP CGI
 #
 # Amin Astaneh
 # amin@aminastaneh.net
 #################################################
 
-BEGIN { require "config.pl"; }
+my $cfg = new Config::Simple('/etc/artaxerxes.cfg');
+
+my $mailhost      = $cfg->param('mailhost');
+my $mailadminuser = $cfg->param('mailadminuser');
+my $mailadminpass = $cfg->param('mailadminpass');
+my $dbhost        = $cfg->param('dbhost');
+my $dbname        = $cfg->param('dbname');
+my $dbuser        = $cfg->param('dbuser');
+my $dbpass        = $cfg->param('dbpass');
 
 # Connect to MySQL 
 my $dsn = "dbi:mysql:$dbname:$dbhost:3306";
@@ -32,13 +41,10 @@ $imap->authenticate(
 	-password => $mailadminpass,
 ) || die "Authentication Failure";
 
-my $daemon = SOAP::Transport::HTTP::Daemon
- -> new (LocalPort => 8080,
-         Reuse     => 1)
- -> dispatch_to('Xerxes')        
-;
+SOAP::Transport::HTTP::CGI
+  -> dispatch_to('artaxerxes')
+  -> handle;
 
-$daemon->handle;
 
 ##############################
 # Begin Functions
@@ -51,7 +57,7 @@ sub END {
 	}
 }
 
-package Xerxes;
+package artaxerxes;
 
 sub listaccts {
 	my ($class, $pattern) = @_;
@@ -171,7 +177,6 @@ sub createacct {
 	$imap->create("user/$address");
 
 	# FIXME: Verify the account was created
-	# FIXME: Add one-way hashing function for password storage. (SHA2)
 	return (1, "OK");
 }
 

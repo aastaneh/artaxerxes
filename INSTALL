@@ -1,0 +1,36 @@
+Artaxerxes Installation Instructions
+
+(This doc is currently just an outline - more specifics are obviously needed)
+
+0 - Install Prerequisite Packages
+	Postfix With MySQL Support
+	Cyrus-IMAPD
+	pam_mysql with OpenSSL support (for MD5)
+	MySQL 
+	Apache with mod_ssl, mod_cgi
+
+1 - Configure Software
+	PAM
+		/etc/pam.d/imap
+		/etc/pam.d/smtp
+		/etc/pam.d/sieve
+	Postfix
+		/etc/main.cf
+		/etc/mysql-*.cf
+	Cyrus-IMAP
+		/etc/imapd.conf
+	Apache
+		Create SSL Cert
+		Create htpasswd file
+		Configure Virtdomain for CGI
+	
+
+2 - Install, Configure Artaxerxes
+		Edit, Import MySQL schema file
+		Copy cgi into place
+		Copy config file into place
+		
+
+3 - Install, Configure Client
+		
+

@@ -1,9 +1,14 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
 use SOAP::Lite;
+use Config::Simple;
+
+my $cfg = new Config::Simple($ENV{"HOME"} . '/.azclientrc');
 
 my $soap = SOAP::Lite
-  -> uri('http://localhost/Xerxes')
-  -> proxy('http://localhost:8080');
+  -> uri($cfg->param('URI'))
+  -> proxy($cfg->param('PROXY'));
 
 if (($#ARGV + 1) != 3) {
 	print "Usage: changedomain domain attribute value\n";
@@ -17,7 +22,7 @@ my $value = $ARGV[2];
 
 my @params = ($domain, $attribute, $value);
 
-$result = $soap->setdomainattributes(@params);
+my $result = $soap->setdomainattributes(@params);
 
 if ($result->result == 0) {
 print $result->paramsout . "\n";

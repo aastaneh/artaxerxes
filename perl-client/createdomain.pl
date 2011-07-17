@@ -1,9 +1,14 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
 use SOAP::Lite;
+use Config::Simple;
+
+my $cfg = new Config::Simple($ENV{"HOME"} . '/.azclientrc');
 
 my $soap = SOAP::Lite
-  -> uri('http://localhost/Xerxes')
-  -> proxy('http://localhost:8080');
+  -> uri($cfg->param('URI'))
+  -> proxy($cfg->param('PROXY'));
 
 if (($#ARGV + 1) != 3) {
 	print "Usage: createdomain name quota max_accounts\n";
@@ -16,7 +21,7 @@ my $maxaccts =$ARGV[2];
 
 my @params = ($name, $quota, $maxaccts);
 
-$result = $soap->createdomain(@params);
+my $result = $soap->createdomain(@params);
 
 if ($result->result == 0) {
 print $result->paramsout . "\n";
